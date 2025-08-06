@@ -1,0 +1,2 @@
+# -teste-
+bugs e gambiarras
