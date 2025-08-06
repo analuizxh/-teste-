@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Empresa {
+  id                  Int                @id @default(autoincrement())
+  cnpj                String             @unique
+  razaoSocial         String
+  email               String             @unique
+  senha               String
+  dataCadastro        DateTime           @default(now())
+  licenca             String             @default("BASICA") 
+  dataExpiracaoLicenca DateTime?       
+  ativo               Boolean            @default(true)
+  funcionarios        Funcionario[]
+  telefones           TelefoneEmpresa[]
+  auditorias          Auditoria[]
+
+  @@map("empresas")
+}
+
+model Funcionario {
+  id                  Int                @id @default(autoincrement())
+  nome                String
+  cpf                 String             @unique
+  email               String             @unique
+  senha               String
+  cargo               String             @default("USUARIO")
+  ativo               Boolean            @default(true)
+  empresa             Empresa            @relation(fields: [empresaId], references: [id])
+  empresaId           Int
+  telefones           TelefoneFuncionario[]
+  agendamentosRealizados AgendamentoMedida[] @relation("Realiza")
+  orcamentosElaborados Orcamento[]
+  auditorias          Auditoria[]
+
+  @@map("funcionarios")
+}
+
+model Cliente {
+  id                  Int                 @id @default(autoincrement())
+  nome                String
+  cpf_cnpj            String              @unique
+  email               String              @unique
+  agendamentos        AgendamentoMedida[]
+  telefones           TelefoneCliente[]
+  enderecos           EnderecoObra[]
+
+  @@map("clientes")
+}
+
+model EnderecoObra {
+  id                  Int       @id @default(autoincrement())
+  logradouro          String
+  bairro              String
+  cep                 String
+  cidade              String
+  clienteId           Int
+  cliente             Cliente   @relation(fields: [clienteId], references: [id])
+
+  @@map("enderecos_obra")
+}
+
+model AgendamentoMedida {
+  id                  Int         @id @default(autoincrement())
+  dataAgendamento     DateTime
+  status              String
+  altura              Decimal?
+  largura             Decimal?
+  profundidade        Decimal?
+  diametro            Decimal?
+  dataMedicao         DateTime?
+  observacaoTecnica   String?
+  clienteId           Int
+  cliente             Cliente     @relation(fields: [clienteId], references: [id])
+  produtoId           Int
+  produto             Produto     @relation(fields: [produtoId], references: [id])
+  responsaveis        Funcionario[] @relation("Realiza")
+  orcamento           Orcamento?
+
+  @@map("agendamentos_medida")
+}
+
+model Orcamento {
+  id                  Int               @id @default(autoincrement())
+  valorTotal          Decimal
+  validade            DateTime
+  funcionarioId       Int
+  elaboradoPor        Funcionario       @relation(fields: [funcionarioId], references: [id])
+  agendamentoMedidaId Int               @unique
+  agendamento         AgendamentoMedida @relation(fields: [agendamentoMedidaId], references: [id])
+
+  @@map("orcamentos")
+}
+
+model Produto {
+  id                  Int                 @id @default(autoincrement())
+  nome                String
+  categoria           String
+  descricaoTecnica    String
+  agendamentos        AgendamentoMedida[]
+
+  @@map("produtos")
+}
+
+model TelefoneEmpresa {
+  id                  Int       @id @default(autoincrement())
+  telefone            String
+  empresaId           Int
+  empresa             Empresa   @relation(fields: [empresaId], references: [id])
+
+  @@map("telefones_empresa")
+}
+
+model TelefoneFuncionario {
+  id                  Int         @id @default(autoincrement())
+  telefone            String
+  funcionarioId       Int
+  funcionario         Funcionario @relation(fields: [funcionarioId], references: [id])
+
+  @@map("telefones_funcionario")
+}
+
+model TelefoneCliente {
+  id                  Int       @id @default(autoincrement())
+  telefone            String
+  clienteId           Int
+  cliente             Cliente   @relation(fields: [clienteId], references: [id])
+
+  @@map("telefones_cliente")
+}
+
+model Auditoria {
+  id        Int     @id @default(autoincrement())
+  acao      String
+  detalhes  String
+  ip        String
+  usuarioId Int
+  empresaid Int?
+  data      DateTime @default(now())
+
+  @@map("auditorias")
+}
